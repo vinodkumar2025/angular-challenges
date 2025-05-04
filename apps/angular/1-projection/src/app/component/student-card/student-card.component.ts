@@ -1,40 +1,51 @@
+import { Component, inject, OnInit } from '@angular/core';
 import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  OnInit,
-} from '@angular/core';
-import { FakeHttpService } from '../../data-access/fake-http.service';
+  FakeHttpService,
+  randStudent,
+} from '../../data-access/fake-http.service';
 import { StudentStore } from '../../data-access/student.store';
-import { CardType } from '../../model/card.model';
 import { CardComponent } from '../../ui/card/card.component';
+import { ListItemComponent } from '../../ui/list-item/list-item.component';
 
 @Component({
   selector: 'app-student-card',
   template: `
     <app-card
       [list]="students()"
-      [type]="cardType"
-      customClass="bg-light-green" />
+      (onAddButtonClick)="addNewStudent()"
+      customClass="bg-light-green">
+      <img src="assets/img/student.webp" width="200" height="200" />
+      <ng-template #listView let-item>
+        <app-list-item
+          [name]="item.firstName"
+          [id]="item.id"
+          (onDeleteClick)="onDeleteButtonClick($event)"></app-list-item>
+      </ng-template>
+    </app-card>
   `,
   styles: [
     `
-      ::ng-deep .bg-light-green {
+      .bg-light-green {
         background-color: rgba(0, 250, 0, 0.1);
       }
     `,
   ],
-  imports: [CardComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CardComponent, ListItemComponent],
 })
 export class StudentCardComponent implements OnInit {
   private http = inject(FakeHttpService);
   private store = inject(StudentStore);
-
   students = this.store.students;
-  cardType = CardType.STUDENT;
 
   ngOnInit(): void {
     this.http.fetchStudents$.subscribe((s) => this.store.addAll(s));
+  }
+
+  addNewStudent() {
+    this.store.addOne(randStudent());
+  }
+
+  onDeleteButtonClick(event: number) {
+    this.store.deleteOne(event);
   }
 }
